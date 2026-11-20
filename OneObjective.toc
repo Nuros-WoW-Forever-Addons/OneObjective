@@ -1,0 +1,13 @@
+## Interface: 16001
+## Title: OneObjective
+## Notes: Zone-grouped collapsible Objective Tracker with configurable Quest Item button placement (Left/Right).
+## Author: Antigravity
+## Version: 0.1.0
+## IconTexture: Interface\Icons\inv_misc_book_09
+## SavedVariables: OneObjectiveDB
+## OptionalDeps: OnePanelUtils, OneSwatter
+
+Core.lua
+Data.lua
+Tracker.lua
+OptionsUI.lua

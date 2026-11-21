@@ -57,7 +57,7 @@ local function GetScaledSizes()
         headerHeight = math.max(24, math.floor(24 * s + 0.5)),
         sectionHeight = math.max(22, math.floor(22 * s + 0.5)),
         zoneHeight = math.max(20, math.floor(20 * s + 0.5)),
-        poiSize = math.max(16, math.floor(18 * s + 0.5)),
+        poiSize = math.max(22, math.floor(24 * s + 0.5)),
     }
 end
 
@@ -202,47 +202,34 @@ local function AcquireQuestBlock(index)
     hl:SetAllPoints()
     hl:SetColorTexture(1.0, 1.0, 1.0, 0.05)
 
-    local poi
-    local useBlizzPOI = false
-    if POIButtonUtil and POIButtonUtil.Style then
-        local ok, created = pcall(CreateFrame, "Button", nil, btn, "POIButtonTemplate")
-        if ok and created then
-            poi = created
-            poi:SetPoint("TOPLEFT", btn, "TOPLEFT", 1, -1)
-            useBlizzPOI = true
-        end
-    end
+    local poi = CreateFrame("Frame", nil, btn)
+    poi:SetSize(18, 18)
+    poi:SetPoint("TOPLEFT", btn, "TOPLEFT", 2, -1)
 
-    if not poi then
-        poi = CreateFrame("Frame", nil, btn, "BackdropTemplate")
-        poi:SetSize(18, 18)
-        poi:SetPoint("TOPLEFT", btn, "TOPLEFT", 2, -1)
+    local poiGlow = poi:CreateTexture(nil, "BACKGROUND")
+    poiGlow:SetPoint("CENTER")
+    poiGlow:SetSize(26, 26)
+    poiGlow:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
+    poiGlow:SetBlendMode("ADD")
+    poiGlow:SetVertexColor(1.0, 0.85, 0.2, 0.9)
+    poiGlow:Hide()
+    poi.glow = poiGlow
 
-        local poiGlow = poi:CreateTexture(nil, "BACKGROUND")
-        poiGlow:SetPoint("CENTER")
-        poiGlow:SetSize(26, 26)
-        poiGlow:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
-        poiGlow:SetBlendMode("ADD")
-        poiGlow:SetVertexColor(1.0, 0.85, 0.2, 0.9)
-        poiGlow:Hide()
-        poi.glow = poiGlow
+    local poiBg = poi:CreateTexture(nil, "ARTWORK")
+    poiBg:SetPoint("CENTER", poi, "CENTER", 0, 0)
+    poiBg:SetSize(24, 24)
+    poi.bg = poiBg
 
-        local poiBg = poi:CreateTexture(nil, "ARTWORK")
-        poiBg:SetAllPoints()
-        poi.bg = poiBg
+    local poiIcon = poi:CreateTexture(nil, "OVERLAY")
+    poiIcon:SetPoint("CENTER", poi, "CENTER", 0, 0)
+    poiIcon:SetSize(12, 12)
+    poi.icon = poiIcon
 
-        local poiIcon = poi:CreateTexture(nil, "OVERLAY")
-        poiIcon:SetPoint("CENTER", poi, "CENTER", 0, 0)
-        poiIcon:SetSize(12, 12)
-        poi.icon = poiIcon
+    local poiText = poi:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    poiText:SetPoint("CENTER", poi, "CENTER", 0, 0)
+    poiText:SetJustifyH("CENTER")
+    poi.text = poiText
 
-        local poiText = poi:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        poiText:SetPoint("CENTER", poi, "CENTER", 0, 0)
-        poiText:SetJustifyH("CENTER")
-        poi.text = poiText
-    end
-
-    btn.useBlizzPOI = useBlizzPOI
     btn.poi = poi
 
     local title = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -359,9 +346,10 @@ local function AcquireItemButton(index)
         return btn
     end
 
-    btn = CreateFrame("Button", "OneObjectiveItemButton" .. index, mainFrame, "SecureActionButtonTemplate,BackdropTemplate")
+    btn = CreateFrame("Button", "OneObjectiveItemButton" .. index, UIParent, "SecureActionButtonTemplate,BackdropTemplate")
     btn:SetSize(ITEM_BTN_SIZE, ITEM_BTN_SIZE)
-    btn:RegisterForClicks("AnyUp")
+    btn:SetFrameStrata("MEDIUM")
+    btn:RegisterForClicks("AnyUp", "AnyDown")
 
     btn:SetBackdrop({
         bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -466,8 +454,12 @@ end
 function Tracker:ApplyAppearance()
     if not mainFrame then return end
     local db = OneObjectiveDB or ns.defaults
-    mainFrame:SetScale(db.scale or 1.0)
-    mainFrame:SetWidth(db.width or 250)
+    if not InCombatLockdown() then
+        mainFrame:SetScale(db.scale or 1.0)
+        mainFrame:SetWidth(db.width or 250)
+    else
+        pendingCombatUpdate = true
+    end
 
     local sizes = GetScaledSizes()
     headerFrame:SetHeight(sizes.headerHeight)
@@ -513,6 +505,7 @@ function Tracker:UpdateItemButtonsLayout()
         local btn = entry.btn
         local relY = entry.questTopInContent - scrollOffset
         if relY >= -4 and relY <= (viewHeight - 14) then
+            btn:SetScale(db.scale or 1.0)
             btn:ClearAllPoints()
             local yOffset = -(sizes.headerHeight + PAD_Y + relY)
             if side == "RIGHT" then
@@ -562,55 +555,16 @@ end
 
 local function ConfigurePOIBadge(qb, questID, isComplete, isSuperTracked, poiSize)
     local poi = qb.poi
-    if qb.useBlizzPOI then
-        local ok = pcall(function()
-            poi:SetScale(poiSize / 24)
-            if poi.SetQuestID then
-                poi:SetQuestID(questID)
-            end
-            if poi.SetStyle then
-                poi:SetStyle(isComplete and POIButtonUtil.Style.QuestComplete or POIButtonUtil.Style.QuestInProgress)
-            end
-            if poi.SetSelected then
-                poi:SetSelected(isSuperTracked and true or false)
-            end
-            if poi.UpdateButtonStyle then
-                poi:UpdateButtonStyle()
-            end
-        end)
-        if ok then
-            return
-        end
-    end
-
     poi:SetSize(poiSize, poiSize)
     if poi.glow then
-        poi.glow:SetSize(poiSize + 8, poiSize + 8)
+        poi.glow:SetSize(poiSize + 10, poiSize + 10)
     end
     if not poi.bg then return end
-    poi.bg:SetVertexColor(1, 1, 1, 1)
 
-    if isComplete then
-        if isSuperTracked then poi.glow:Show() else poi.glow:Hide() end
-        if HasAtlas("UI-QuestIcon-TurnIn-Normal") then
-            poi.bg:SetAtlas("UI-QuestIcon-TurnIn-Normal", false)
-            poi.icon:Hide()
-            poi.text:SetText("")
-            return
-        elseif HasAtlas("QuestTurnin") then
-            poi.bg:SetAtlas("QuestTurnin", false)
-            poi.icon:Hide()
-            poi.text:SetText("")
-            return
-        end
-        poi.bg:SetTexture("Interface\\Common\\Indicator-Yellow")
-        poi.bg:SetTexCoord(0.18, 0.82, 0.18, 0.82)
-        poi.bg:SetVertexColor(0.85, 0.65, 0.12, 0.95)
-        poi.icon:Hide()
-        poi.text:SetTextColor(0.1, 0.1, 0.1)
-        poi.text:SetText("?")
-        return
-    end
+    local bgSize = math.floor(poiSize * 1.45 + 0.5)
+    poi.bg:SetSize(bgSize, bgSize)
+    poi.bg:SetTexCoord(0, 1, 0, 1)
+    poi.bg:SetVertexColor(1, 1, 1, 1)
 
     if isSuperTracked then
         poi.glow:Show()
@@ -634,15 +588,34 @@ local function ConfigurePOIBadge(qb, questID, isComplete, isSuperTracked, poiSiz
         end
     end
 
-    if HasAtlas("Quest-In-Progress-Icon-small") then
-        poi.icon:SetAtlas("Quest-In-Progress-Icon-small", false)
-        poi.icon:SetSize(math.floor(poiSize * 0.6), math.floor(poiSize * 0.6))
-        poi.icon:Show()
-        poi.text:SetText("")
+    if isComplete then
+        local turnInSize = math.floor(poiSize * 1.15 + 0.5)
+        if HasAtlas("UI-QuestIcon-TurnIn-Normal") then
+            poi.icon:SetAtlas("UI-QuestIcon-TurnIn-Normal", false)
+            poi.icon:SetSize(turnInSize, turnInSize)
+            poi.icon:Show()
+            poi.text:SetText("")
+        elseif HasAtlas("QuestTurnin") then
+            poi.icon:SetAtlas("QuestTurnin", false)
+            poi.icon:SetSize(turnInSize, turnInSize)
+            poi.icon:Show()
+            poi.text:SetText("")
+        else
+            poi.icon:Hide()
+            poi.text:SetTextColor(1.0, 0.85, 0.2)
+            poi.text:SetText("?")
+        end
     else
-        poi.icon:Hide()
-        poi.text:SetTextColor(isSuperTracked and 0.2 or 1.0, isSuperTracked and 0.12 or 0.85, isSuperTracked and 0.02 or 0.35)
-        poi.text:SetText("•••")
+        if HasAtlas("Quest-In-Progress-Icon-small") then
+            poi.icon:SetAtlas("Quest-In-Progress-Icon-small", false)
+            poi.icon:SetSize(math.floor(poiSize * 0.65 + 0.5), math.floor(poiSize * 0.65 + 0.5))
+            poi.icon:Show()
+            poi.text:SetText("")
+        else
+            poi.icon:Hide()
+            poi.text:SetTextColor(isSuperTracked and 0.2 or 1.0, isSuperTracked and 0.12 or 0.85, isSuperTracked and 0.02 or 0.35)
+            poi.text:SetText("•••")
+        end
     end
 end
 
@@ -659,7 +632,11 @@ function Tracker:Refresh()
             minimizeAllBtn.fallbackText:SetText("+")
         end
         scrollFrame:Hide()
-        mainFrame:SetHeight(sizes.headerHeight + 4)
+        if not InCombatLockdown() then
+            mainFrame:SetHeight(sizes.headerHeight + 4)
+        else
+            pendingCombatUpdate = true
+        end
         self:UpdateItemButtonsLayout()
         return
     else
@@ -928,7 +905,11 @@ function Tracker:Refresh()
     local visibleScrollHeight = math.min(contentHeight, maxScrollHeight)
 
     scrollFrame:SetHeight(visibleScrollHeight)
-    mainFrame:SetHeight(sizes.headerHeight + (PAD_Y * 2) + visibleScrollHeight)
+    if not InCombatLockdown() then
+        mainFrame:SetHeight(sizes.headerHeight + (PAD_Y * 2) + visibleScrollHeight)
+    else
+        pendingCombatUpdate = true
+    end
 
     local maxScroll = math.max(0, contentHeight - visibleScrollHeight)
     if scrollFrame:GetVerticalScroll() > maxScroll then

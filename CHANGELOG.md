@@ -1,5 +1,18 @@
 # Changelog — OneObjective
 
+## [0.1.5] - 2026-11-21
+### Fixed
+- **MapCanvas `SetPassThroughButtons` Taint**: Removed `POIButtonTemplate` instantiation from `Tracker.lua` (which tainted `Blizzard_POIButton` / `QuestDataProvider` map pins on `MapCanvas:AcquirePin`) and switched to a taint-free plain `Frame` using Blizzard's POI atlases directly (`UI-QuestPoi-QuestNumber`, `UI-QuestPoi-QuestNumber-SuperTracked`, `Quest-In-Progress-Icon-small`, `UI-QuestIcon-TurnIn-Normal`).
+
+## [0.1.4] - 2026-11-20
+### Fixed
+- **Quest Item Button Clicks**: Updated `SecureActionButtonTemplate` quest item buttons to `RegisterForClicks("AnyUp", "AnyDown")` so clicks trigger properly when `ActionButtonUseKeyDown` is enabled.
+- **Combat Lockdown Protected Call Errors**: Reparented `OneObjectiveItemButton*` frames from `OneObjectiveFrame` to `UIParent` (so `OneObjectiveFrame` never inherits combat-protected status) and guarded `SetScale` / `SetWidth` / `SetHeight` with `InCombatLockdown()`.
+
+## [0.1.3] - 2026-11-20
+### Fixed
+- **Blizzard Tracker Flash on Quest Update**: Added `SetAlpha(0)` suppression and `hooksecurefunc(ObjectiveTrackerFrame, "SetShown", ...)` alongside the `Show` hook in `Core.lua` so Blizzard's default tracker never flashes visible when quest objectives update.
+
 ## [0.1.2] - 2026-11-20
 ### Added
 - **Collapsible `Quests` Section Header**: Added a top-level `Quests` header above all Zone headers. Collapsing `Quests` hides all zone headers and quests while keeping tracked `Professions` recipes visible below.

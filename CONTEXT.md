@@ -7,10 +7,10 @@
 ## 🎯 Overview & Scope
 
 - **Addon Name**: OneObjective
-- **Current Version**: 0.1.2
+- **Current Version**: 0.1.5
 - **Suite**: Part of the **OneSuite** family
 - **GitHub Repository**:
-  - Exists: FALSE
+  - Exists: TRUE
   - URL: https://github.com/Nuros-WoW-Forever-Addons/OneObjective
 - **Branching Policy**: All new features must be developed on a branch != `main` (e.g. `feature/<name>` or `dev`)
 - **Live Sync Path**: `/Applications/World of Warcraft/_forever_/Interface/AddOns/OneObjective/`
@@ -55,6 +55,17 @@ OneObjectiveDB = {
 ---
 
 ## ✅ Recent Completed Work (Latest Spins)
+
+### Spin 0.1.5
+- **Fixed `MapCanvas` `SetPassThroughButtons` Taint**: Removed `POIButtonTemplate` from `Tracker.lua` and rendered Blizzard's exact POI atlases (`UI-QuestPoi-QuestNumber`, `UI-QuestPoi-QuestNumber-SuperTracked`, `Quest-In-Progress-Icon-small`, `UI-QuestIcon-TurnIn-Normal`) on a plain `Frame` so `QuestDataProvider` map pins are never tainted.
+
+### Spin 0.1.4
+- **Fixed Quest Item Button Clicks & Combat Protected Call Errors**:
+  - Updated `AcquireItemButton` in `Tracker.lua` to `RegisterForClicks("AnyUp", "AnyDown")` so quest items trigger when `ActionButtonUseKeyDown` is active.
+  - Reparented `OneObjectiveItemButton*` to `UIParent` so `OneObjectiveFrame` does not become combat-protected, and guarded `SetScale`/`SetWidth`/`SetHeight` with `InCombatLockdown()`.
+
+### Spin 0.1.3
+- **Fixed Blizzard Tracker Flash**: Added `SetAlpha(0)` and `SetShown` hook to `UpdateBlizzardTracker()` in `Core.lua` so `ObjectiveTrackerFrame` never flashes visible on quest objective updates.
 
 ### Spin 0.1.0
 - **Initial OneObjective Addon**:

@@ -241,6 +241,22 @@ local function AcquireQuestBlock(index)
 
     btn.objLines = {}
 
+    local timerBar = CreateFrame("StatusBar", nil, btn, "BackdropTemplate")
+    timerBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+    timerBar:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 8, edgeSize = 8,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 },
+    })
+    timerBar:SetBackdropColor(0.05, 0.05, 0.07, 0.85)
+    timerBar:SetBackdropBorderColor(0.45, 0.40, 0.25, 0.8)
+    local timerText = timerBar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    timerText:SetPoint("CENTER", timerBar, "CENTER", 0, 0)
+    timerBar.text = timerText
+    timerBar:Hide()
+    btn.timerBar = timerBar
+
     btn:SetScript("OnClick", function(self, mouseBtn)
         if self.isProfession then
             if mouseBtn == "LeftButton" and IsShiftKeyDown() then
@@ -533,6 +549,20 @@ function Tracker:FlushCombatQueue()
     end
 end
 
+function Tracker:UpdateInlineTimers()
+    if not ns.TimerFrame then return end
+    for _, qb in ipairs(activeQuestBlocks) do
+        if qb.timerData and qb.timerBar and qb.timerBar:IsShown() then
+            local rem, total = ns.TimerFrame:GetRemaining(qb.timerData)
+            local r, g, b = ns.TimerFrame:GetBarColor(rem, total)
+            qb.timerBar:SetMinMaxValues(0, total)
+            qb.timerBar:SetValue(rem)
+            qb.timerBar:SetStatusBarColor(r, g, b)
+            qb.timerBar.text:SetText("Time Remaining: " .. ns.TimerFrame:FormatTime(rem))
+        end
+    end
+end
+
 -------------------------------------------------------------------------------
 -- Collapse / Expand All
 -------------------------------------------------------------------------------
@@ -646,7 +676,7 @@ function Tracker:Refresh()
         scrollFrame:Show()
     end
 
-    local groups, totalQuests = ns.Data:GetGroupedQuests()
+    local groups, totalQuests, timedQuests = ns.Data:GetGroupedQuests()
     local recipes = ns.Data:GetTrackedRecipes()
     lastGroups = groups
 
@@ -657,6 +687,8 @@ function Tracker:Refresh()
 
     for _, qb in ipairs(activeQuestBlocks) do
         qb:Hide()
+        qb.timerData = nil
+        if qb.timerBar then qb.timerBar:Hide() end
         for _, fs in ipairs(qb.objLines) do
             fs:Hide()
         end
@@ -781,6 +813,21 @@ function Tracker:Refresh()
                             fs:SetTextColor(0.45, 0.95, 0.45)
                             local lh = fs:GetStringHeight() or sizes.objFont
                             blockY = blockY + lh + OBJECTIVE_GAP
+                        end
+
+                        if q.timer and not db.standaloneQuestTimer then
+                            local barH = math.max(13, math.floor(13 * GetFontScale() + 0.5))
+                            qb.timerData = q.timer
+                            qb.timerBar:ClearAllPoints()
+                            qb.timerBar:SetPoint("TOPLEFT", qb, "TOPLEFT", titleOffsetX + 2, -(blockY + 2))
+                            qb.timerBar:SetPoint("TOPRIGHT", qb, "TOPRIGHT", -6, -(blockY + 2))
+                            qb.timerBar:SetHeight(barH)
+                            qb.timerBar.text:SetFont(sizes.fontPath, math.max(9, sizes.objFont - 2), "OUTLINE")
+                            qb.timerBar:Show()
+                            blockY = blockY + barH + 5
+                        else
+                            qb.timerData = nil
+                            if qb.timerBar then qb.timerBar:Hide() end
                         end
 
                         local blockHeight = math.max(sizes.poiSize + 2, blockY + 2)
@@ -917,6 +964,10 @@ function Tracker:Refresh()
     end
 
     self:UpdateItemButtonsLayout()
+    self:UpdateInlineTimers()
+    if ns.TimerFrame and ns.TimerFrame.Refresh then
+        ns.TimerFrame:Refresh(timedQuests)
+    end
 end
 
 -------------------------------------------------------------------------------

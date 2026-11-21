@@ -85,7 +85,7 @@ function OptionsUI:CreateStandaloneWindow()
     if standaloneWindow then return standaloneWindow end
 
     local frame = CreateFrame("Frame", "OneObjectiveOptionsFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(370, 606)
+    frame:SetSize(370, 666)
     frame:SetFrameStrata("DIALOG")
     frame:SetToplevel(true)
     frame:SetClampedToScreen(true)
@@ -174,6 +174,13 @@ function OptionsUI:CreateStandaloneWindow()
         function() return OneObjectiveDB and (OneObjectiveDB.showQuestLevels ~= false) end,
         function(val)
             OneObjectiveDB.showQuestLevels = val
+            ns:RequestTrackerUpdate()
+        end)
+
+    AddCheckbox("Standalone Quest Timer Frame",
+        function() return OneObjectiveDB and OneObjectiveDB.standaloneQuestTimer end,
+        function(val)
+            OneObjectiveDB.standaloneQuestTimer = val
             ns:RequestTrackerUpdate()
         end)
 
@@ -292,6 +299,22 @@ function OptionsUI:CreateStandaloneWindow()
         ns:Print("Tracker position reset.")
     end)
     resetBtn:SetPoint("LEFT", expandBtn, "RIGHT", 8, 0)
+
+    local previewTimerBtn = CreateButton(frame, "Preview Timer", 150, 24, function()
+        if ns.TimerFrame and ns.TimerFrame.TogglePreview then
+            ns.TimerFrame:TogglePreview()
+        end
+    end)
+    previewTimerBtn:SetPoint("TOPLEFT", collapseBtn, "BOTTOMLEFT", 0, -8)
+
+    local resetTimerBtn = CreateButton(frame, "Reset Timer Pos", 150, 24, function()
+        OneObjectiveDB.timerPosition = nil
+        if ns.TimerFrame and ns.TimerFrame.ApplyPosition then
+            ns.TimerFrame:ApplyPosition()
+        end
+        ns:Print("Standalone timer position reset.")
+    end)
+    resetTimerBtn:SetPoint("LEFT", previewTimerBtn, "RIGHT", 10, 0)
 
     frame:Hide()
     standaloneWindow = frame

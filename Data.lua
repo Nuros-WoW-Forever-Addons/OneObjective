@@ -83,6 +83,8 @@ function Data:GetGroupedQuests()
     local currentZoneHeader = "Other Quests"
     local numEntries = C_QuestLog.GetNumQuestLogEntries() or 0
     local totalQuests = 0
+    local timedQuests = {}
+    local now = GetTime()
 
     for i = 1, numEntries do
         local info = C_QuestLog.GetInfo(i)
@@ -103,6 +105,18 @@ function Data:GetGroupedQuests()
                     local objectives = (C_QuestLog.GetQuestObjectives and C_QuestLog.GetQuestObjectives(questID)) or {}
                     local specialItem = ExtractSpecialItem(i, isComplete)
 
+                    local timerInfo = nil
+                    if C_QuestLog.GetTimeAllowed then
+                        local totalTime, elapsedTime = C_QuestLog.GetTimeAllowed(questID)
+                        if totalTime and totalTime > 0 then
+                            timerInfo = {
+                                total = totalTime,
+                                elapsed = elapsedTime or 0,
+                                fetchedAt = now,
+                            }
+                        end
+                    end
+
                     local group = zonesByName[currentZoneHeader]
                     if not group then
                         group = {
@@ -113,16 +127,22 @@ function Data:GetGroupedQuests()
                         table.insert(groups, group)
                     end
 
-                    table.insert(group.quests, {
+                    local questEntry = {
                         questID = questID,
                         questLogIndex = i,
                         title = info.title or ("Quest " .. tostring(questID)),
                         level = info.level or 0,
+                        zone = currentZoneHeader,
                         isComplete = isComplete and true or false,
                         isSuperTracked = (superTrackedID == questID),
                         objectives = objectives,
                         specialItem = specialItem,
-                    })
+                        timer = timerInfo,
+                    }
+                    table.insert(group.quests, questEntry)
+                    if timerInfo then
+                        table.insert(timedQuests, questEntry)
+                    end
                     totalQuests = totalQuests + 1
                 end
             end
@@ -143,7 +163,7 @@ function Data:GetGroupedQuests()
         return a.zone < b.zone
     end)
 
-    return groups, totalQuests
+    return groups, totalQuests, timedQuests
 end
 
 function Data:GetTrackedRecipes()

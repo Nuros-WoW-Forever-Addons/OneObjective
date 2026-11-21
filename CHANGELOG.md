@@ -1,5 +1,11 @@
 # Changelog — OneObjective
 
+## [0.2.0] - 2026-11-21
+### Added
+- **Timed Quest Countdown Bars**: Automatically detects timed quests via `C_QuestLog.GetTimeAllowed(questID)` and renders a live color-coded countdown bar (`Time Remaining: MM:SS`) directly below the quest's objectives in the tracker.
+- **Standalone Movable Quest Timer Frame (`TimerFrame.lua`)**: Added a **Standalone Quest Timer Frame** option in `/oo` (and `/oo timer`) that displays timed quests in an independent, draggable frame (`OneObjectiveTimerFrame`) mirroring each timed quest's title, objectives, and live countdown bar.
+- **Timer Preview & Position Reset**: Added **Preview Timer** (`/oo timer test`) and **Reset Timer Pos** (`/oo timer reset`) buttons in `/oo` Options so players can position the standalone timer frame anytime.
+
 ## [0.1.5] - 2026-11-21
 ### Fixed
 - **MapCanvas `SetPassThroughButtons` Taint**: Removed `POIButtonTemplate` instantiation from `Tracker.lua` (which tainted `Blizzard_POIButton` / `QuestDataProvider` map pins on `MapCanvas:AcquirePin`) and switched to a taint-free plain `Frame` using Blizzard's POI atlases directly (`UI-QuestPoi-QuestNumber`, `UI-QuestPoi-QuestNumber-SuperTracked`, `Quest-In-Progress-Icon-small`, `UI-QuestIcon-TurnIn-Normal`).

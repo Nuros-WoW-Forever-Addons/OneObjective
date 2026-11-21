@@ -7,7 +7,7 @@
 ## 🎯 Overview & Scope
 
 - **Addon Name**: OneObjective
-- **Current Version**: 0.1.5
+- **Current Version**: 0.2.0
 - **Suite**: Part of the **OneSuite** family
 - **GitHub Repository**:
   - Exists: TRUE
@@ -55,6 +55,12 @@ OneObjectiveDB = {
 ---
 
 ## ✅ Recent Completed Work (Latest Spins)
+
+### Spin 0.2.0
+- **Timed Quest Support (`TimerFrame.lua`, `Data.lua`, `Tracker.lua`)**:
+  - Added `C_QuestLog.GetTimeAllowed(questID)` extraction in `Data.lua`.
+  - Added inline countdown bar (`StatusBar` + `Time Remaining: MM:SS`) below timed quest objectives in `Tracker.lua`.
+  - Added optional standalone movable `OneObjectiveTimerFrame` (`OneObjectiveDB.standaloneQuestTimer`) mirroring quest name, objectives, and live timer bar, with `/oo timer test` preview and `/oo timer reset`.
 
 ### Spin 0.1.5
 - **Fixed `MapCanvas` `SetPassThroughButtons` Taint**: Removed `POIButtonTemplate` from `Tracker.lua` and rendered Blizzard's exact POI atlases (`UI-QuestPoi-QuestNumber`, `UI-QuestPoi-QuestNumber-SuperTracked`, `Quest-In-Progress-Icon-small`, `UI-QuestIcon-TurnIn-Normal`) on a plain `Frame` so `QuestDataProvider` map pins are never tainted.

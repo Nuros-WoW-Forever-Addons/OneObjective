@@ -7,7 +7,7 @@
 local addonName, ns = ...
 _G.OneObjective = ns
 
-ns.version = "0.1.0"
+ns.version = "0.2.0"
 
 ns.defaults = {
     enabled = true,
@@ -23,9 +23,11 @@ ns.defaults = {
     showQuestLevels = true,
     sortCurrentZoneFirst = true,
     allCollapsed = false,
+    standaloneQuestTimer = false,
     routeToOneAddonTab = true,
     collapsedZones = {},
     position = nil,
+    timerPosition = nil,
     optionsPosition = nil,
 }
 
@@ -231,6 +233,22 @@ local function HandleSlashCommand(msg)
         OneObjectiveDB.routeToOneAddonTab = not (OneObjectiveDB.routeToOneAddonTab ~= false)
         local dest = OneObjectiveDB.routeToOneAddonTab and "'OneAddon' chat tab" or "General chat"
         ns:Print("Addon messages routed to |cffffd200" .. dest .. "|r.")
+    elseif cmd == "timer" then
+        if arg == "test" or arg == "preview" then
+            if ns.TimerFrame and ns.TimerFrame.TogglePreview then
+                ns.TimerFrame:TogglePreview()
+            end
+        elseif arg == "reset" then
+            OneObjectiveDB.timerPosition = nil
+            if ns.TimerFrame and ns.TimerFrame.ApplyPosition then
+                ns.TimerFrame:ApplyPosition()
+            end
+            ns:Print("Standalone timer position reset.")
+        else
+            OneObjectiveDB.standaloneQuestTimer = not OneObjectiveDB.standaloneQuestTimer
+            ns:RequestTrackerUpdate()
+            ns:Print("Quest timer mode: |cffffd200" .. (OneObjectiveDB.standaloneQuestTimer and "Standalone Frame" or "Inline in Tracker") .. "|r.")
+        end
     elseif cmd == "reset" then
         OneObjectiveDB.position = nil
         if ns.Tracker and ns.Tracker.ApplyPosition then
@@ -245,6 +263,7 @@ local function HandleSlashCommand(msg)
         ns:Print("  |cffffd200/oo all|r - Toggle watched-only vs all quests")
         ns:Print("  |cffffd200/oo collapse|r / |cffffd200expand|r - Collapse or expand all zones")
         ns:Print("  |cffffd200/oo blizz|r - Toggle hiding Blizzard's default tracker")
+        ns:Print("  |cffffd200/oo timer [test|reset]|r - Toggle standalone quest timer or preview/reset it")
         ns:Print("  |cffffd200/oo chat|r - Toggle 'OneAddon' chat tab routing")
         ns:Print("  |cffffd200/oo reset|r - Reset tracker position")
     end
@@ -271,6 +290,9 @@ function events.ADDON_LOADED(loadedAddon)
     if ns.Tracker and ns.Tracker.Init then
         ns.Tracker:Init()
     end
+    if ns.TimerFrame and ns.TimerFrame.Init then
+        ns.TimerFrame:Init()
+    end
     if ns.OptionsUI and ns.OptionsUI.Init then
         ns.OptionsUI:Init()
     end
@@ -296,6 +318,10 @@ function events.QUEST_LOG_UPDATE()
 end
 
 function events.QUEST_WATCH_LIST_CHANGED()
+    ns:RequestTrackerUpdate()
+end
+
+function events.QUEST_WATCH_UPDATE()
     ns:RequestTrackerUpdate()
 end
 

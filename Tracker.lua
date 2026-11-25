@@ -278,6 +278,10 @@ local function AcquireQuestBlock(index)
                     C_QuestLog.RemoveQuestWatch(questID)
                 end
             else
+                if InCombatLockdown() then
+                    ns:Print("Cannot change super-tracked quest while in combat.")
+                    return
+                end
                 if C_SuperTrack and C_SuperTrack.SetSuperTrackedQuestID then
                     local current = C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.GetSuperTrackedQuestID()
                     if current == questID then
@@ -288,9 +292,14 @@ local function AcquireQuestBlock(index)
                 end
             end
         elseif mouseBtn == "RightButton" then
-            if QuestMapFrame_OpenToQuestDetails then
-                QuestMapFrame_OpenToQuestDetails(questID)
-            elseif ToggleQuestLog then
+            if InCombatLockdown() then
+                ns:Print("Cannot open Quest Log while in combat.")
+                return
+            end
+            if C_QuestLog and C_QuestLog.SetSelectedQuest then
+                C_QuestLog.SetSelectedQuest(questID)
+            end
+            if ToggleQuestLog and not (WorldMapFrame and WorldMapFrame:IsShown()) then
                 ToggleQuestLog()
             end
         end
@@ -1040,22 +1049,19 @@ function Tracker:Init()
     minimizeAllBtn = CreateFrame("Button", nil, headerFrame, "BackdropTemplate")
     minimizeAllBtn:SetSize(16, 16)
     minimizeAllBtn:SetPoint("RIGHT", headerFrame, "RIGHT", -4, 0)
-    local blizzMin = _G.ObjectiveTrackerFrame and _G.ObjectiveTrackerFrame.Header and _G.ObjectiveTrackerFrame.Header.MinimizeButton
-    if not CopyBlizzardMinimizeStyle(minimizeAllBtn, blizzMin) then
-        minimizeAllBtn:SetBackdrop({
-            bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            tile = true, tileSize = 8, edgeSize = 8,
-            insets = { left = 1, right = 1, top = 1, bottom = 1 },
-        })
-        minimizeAllBtn:SetBackdropColor(0.55, 0.12, 0.10, 0.95)
-        minimizeAllBtn:SetBackdropBorderColor(0.85, 0.70, 0.25, 1.0)
-        local fs = minimizeAllBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        fs:SetPoint("CENTER", 0, 1)
-        fs:SetTextColor(1.0, 0.85, 0.25)
-        fs:SetText("-")
-        minimizeAllBtn.fallbackText = fs
-    end
+    minimizeAllBtn:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 8, edgeSize = 8,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 },
+    })
+    minimizeAllBtn:SetBackdropColor(0.55, 0.12, 0.10, 0.95)
+    minimizeAllBtn:SetBackdropBorderColor(0.85, 0.70, 0.25, 1.0)
+    local fs = minimizeAllBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    fs:SetPoint("CENTER", 0, 1)
+    fs:SetTextColor(1.0, 0.85, 0.25)
+    fs:SetText("-")
+    minimizeAllBtn.fallbackText = fs
     minimizeAllBtn:SetScript("OnClick", function()
         if OneObjectiveDB then
             OneObjectiveDB.allCollapsed = not OneObjectiveDB.allCollapsed

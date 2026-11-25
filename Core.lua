@@ -7,7 +7,7 @@
 local addonName, ns = ...
 _G.OneObjective = ns
 
-ns.version = "0.2.0"
+ns.version = "0.2.5"
 
 ns.defaults = {
     enabled = true,
@@ -122,50 +122,21 @@ end
 -------------------------------------------------------------------------------
 -- Blizzard ObjectiveTrackerFrame Suppression
 -------------------------------------------------------------------------------
-local blizzHooked = false
 local pendingBlizzUpdate = false
 
 function ns:UpdateBlizzardTracker()
     local blizz = _G.ObjectiveTrackerFrame
     if not blizz then return end
 
-    local function Suppress(self)
-        if OneObjectiveDB and OneObjectiveDB.hideBlizzardTracker then
-            self:SetAlpha(0)
-            if InCombatLockdown() then
-                pendingBlizzUpdate = true
-            else
-                self:Hide()
-            end
-        end
-    end
-
-    if not blizzHooked then
-        blizzHooked = true
-        hooksecurefunc(blizz, "Show", Suppress)
-        if blizz.SetShown then
-            hooksecurefunc(blizz, "SetShown", function(self, shown)
-                if shown then
-                    Suppress(self)
-                end
-            end)
-        end
+    if InCombatLockdown() then
+        pendingBlizzUpdate = true
+        return
     end
 
     if OneObjectiveDB and OneObjectiveDB.hideBlizzardTracker then
         blizz:SetAlpha(0)
-        if InCombatLockdown() then
-            pendingBlizzUpdate = true
-        else
-            blizz:Hide()
-        end
     else
         blizz:SetAlpha(1)
-        if InCombatLockdown() then
-            pendingBlizzUpdate = true
-        else
-            blizz:Show()
-        end
     end
 end
 

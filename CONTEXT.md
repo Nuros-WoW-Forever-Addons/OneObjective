@@ -7,7 +7,7 @@
 ## 🎯 Overview & Scope
 
 - **Addon Name**: OneObjective
-- **Current Version**: 0.2.0
+- **Current Version**: 0.2.5
 - **Suite**: Part of the **OneSuite** family
 - **GitHub Repository**:
   - Exists: TRUE
@@ -55,6 +55,21 @@ OneObjectiveDB = {
 ---
 
 ## ✅ Recent Completed Work (Latest Spins)
+
+### Spin 0.2.5
+- **Fixed Quest Log Taint**: Replaced `QuestMapFrame_OpenToQuestDetails` with `C_QuestLog.SetSelectedQuest` + `ToggleQuestLog` on Right-Click in `Tracker.lua` so `QuestMapFrame` is never tainted.
+
+### Spin 0.2.4
+- **Fixed Combat `SetPassThroughButtons()` Error**: Guarded `QuestMapFrame_OpenToQuestDetails`, `ToggleQuestLog`, and `C_SuperTrack.SetSuperTrackedQuestID` in `Tracker.lua` with `InCombatLockdown()` so clicking quest rows during combat never triggers protected `MapCanvas` pin updates.
+
+### Spin 0.2.3
+- **Fixed Combat `GetAuraDataByIndex()` Taint**: Switched `UpdateBlizzardTracker()` in `Core.lua` to `SetAlpha(0)` / `SetAlpha(1)` only (removing `SetParent`, `Hide`, `RegisterStateDriver`, and `hooksecurefunc`) so `ObjectiveTrackerFrame`'s `OnHide`/`EditMode` callbacks are never triggered from addon taint.
+
+### Spin 0.2.2
+- **Fixed Blizzard Tracker Flash on World Map Open/Close**: Reparented `ObjectiveTrackerFrame` to `OneObjectiveHiddenParent` (a hidden `UIParent` child) in `Core.lua` so `WorldMapFrame` open/close never flashes it and `IsVisible()` remains `false` in combat.
+
+### Spin 0.2.1
+- **Fixed Combat `GetAuraDataByIndex()` Taint**: Switched `ObjectiveTrackerFrame` suppression in `Core.lua` to `RegisterStateDriver(..., "visibility", "hide")` / `UnregisterStateDriver(...)` and removed `ObjectiveTrackerFrame` texture copying in `Tracker.lua`, preventing taint on `ScenarioObjectiveTracker` / `Blizzard_MawBuffs` in combat.
 
 ### Spin 0.2.0
 - **Timed Quest Support (`TimerFrame.lua`, `Data.lua`, `Tracker.lua`)**:

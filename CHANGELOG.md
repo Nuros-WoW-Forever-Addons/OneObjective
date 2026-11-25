@@ -1,5 +1,25 @@
 # Changelog — OneObjective
 
+## [0.2.5] - 2026-11-24
+### Fixed
+- **Quest Log Category Taint**: Replaced `QuestMapFrame_OpenToQuestDetails(questID)` on Right-Click in `Tracker.lua` with `C_QuestLog.SetSelectedQuest(questID)` + `ToggleQuestLog()` to avoid tainting `QuestMapFrame` internals.
+
+## [0.2.4] - 2026-11-23
+### Fixed
+- **Combat `SetPassThroughButtons()` Error on Quest Click**: Guarded `QuestMapFrame_OpenToQuestDetails` / `ToggleQuestLog` (Right-Click) and `C_SuperTrack.SetSuperTrackedQuestID` (Left-Click) in `Tracker.lua` with `InCombatLockdown()`, preventing protected `MapCanvas` pin `SetPassThroughButtons()` calls during combat.
+
+## [0.2.3] - 2026-11-23
+### Fixed
+- **Combat `GetAuraDataByIndex()` Taint**: Replaced `SetParent`/`Hide` suppression of `ObjectiveTrackerFrame` with `SetAlpha(0)` / `SetAlpha(1)` only, avoiding `OnHide`/`EditMode` callbacks that tainted `ObjectiveTrackerFrame` in combat.
+
+## [0.2.2] - 2026-11-22
+### Fixed
+- **Blizzard Tracker Flash on World Map Open/Close**: Reparented `ObjectiveTrackerFrame` to a hidden `OneObjectiveHiddenParent` frame instead of relying on `RegisterStateDriver`, preventing `WorldMapFrame` open/close from flashing Blizzard's tracker while keeping `IsVisible()` false so combat aura checks are never triggered.
+
+## [0.2.1] - 2026-11-21
+### Fixed
+- **Combat `GetAuraDataByIndex()` Taint Error**: Replaced `Hide()` / `SetAlpha(0)` / `hooksecurefunc` suppression of `ObjectiveTrackerFrame` with `RegisterStateDriver(ObjectiveTrackerFrame, "visibility", "hide")` (and removed `ObjectiveTrackerFrame.Header.MinimizeButton` inspection) so `ObjectiveTrackerFrame` is never tainted during combat updates.
+
 ## [0.2.0] - 2026-11-21
 ### Added
 - **Timed Quest Countdown Bars**: Automatically detects timed quests via `C_QuestLog.GetTimeAllowed(questID)` and renders a live color-coded countdown bar (`Time Remaining: MM:SS`) directly below the quest's objectives in the tracker.
